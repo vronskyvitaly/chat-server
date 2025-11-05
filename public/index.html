@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket Chat</title>
+    <style>
+        #messages {
+            border: 1px solid #ccc;
+            height: 300px;
+            overflow-y: scroll;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+<h1>WebSocket Chat</h1>
+<div>
+    <label for="username">Введите ваше имя:</label>
+    <input type="text" id="username" />
+    <button id="joinChat">Войти в чат</button>
+</div>
+<div id="messages"></div>
+<input type="text" id="messageInput" placeholder="Введите сообщение..." disabled />
+<button id="sendMessage" disabled>Отправить</button>
+
+<script>
+    let socket;
+    let username;
+
+    document.getElementById('joinChat').onclick = () => {
+        username = document.getElementById('username').value;
+        if (username) {
+            socket = new WebSocket('ws://localhost:3001/chat');
+
+            socket.onopen = () => {
+                console.log('Соединение установлено');
+                document.getElementById('messageInput').disabled = false;
+                document.getElementById('sendMessage').disabled = false;
+            };
+
+            socket.onmessage = (event) => {
+                const messagesDiv = document.getElementById('messages');
+                messagesDiv.innerHTML += `<p>${event.data}</p>`;
+                messagesDiv.scrollTop = messagesDiv.scrollHeight; // Прокрутка вниз
+            };
+
+            socket.onclose = () => {
+                console.log('Соединение закрыто');
+            };
+
+            socket.onerror = (error) => {
+                console.error('Ошибка:', error);
+            };
+        } else {
+            alert('Пожалуйста, введите имя.');
+        }
+    };
+
+    document.getElementById('sendMessage').onclick = () => {
+        const messageInput = document.getElementById('messageInput');
+        const message = messageInput.value;
+        if (message) {
+            const messageData = JSON.stringify({ username, message });
+            socket.send(messageData);
+            messageInput.value = '';
+        }
+    };
+</script>
+</body>
+</html>

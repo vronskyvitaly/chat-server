@@ -1,7 +1,7 @@
 import WebSocket from 'ws'
 import express from 'express'
 import expressWs from 'express-ws'
-import { v4 as uuidv4 } from 'uuid'
+import { randomUUID } from 'crypto'
 
 type MessageData = {
   username: string
@@ -13,7 +13,7 @@ const clients: Map<WebSocket, string> = new Map() // Храним WebSocket и �
 
 export function setupChat(app: expressWs.Application) {
   app.ws('/chat', (ws: WebSocket, req: express.Request) => {
-    const userId = uuidv4() // Генерируем уникальный ID
+    const userId = randomUUID() // Генерируем уникальный ID
     console.log('Новый участник присоединился к чату:', req.socket.remoteAddress, 'ID:', userId)
 
     clients.set(ws, userId) // Сохраняем ID пользователя

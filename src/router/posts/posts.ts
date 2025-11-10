@@ -1,4 +1,4 @@
-// src/router/index.ts
+// src/router/authorizationUserRouter.ts
 
 import express from 'express'
 import authenticateToken from '../../middleware/authenticate-token'

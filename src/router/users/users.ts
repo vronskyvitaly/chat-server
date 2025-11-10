@@ -1,4 +1,4 @@
-// src/routes/index.ts
+// src/routes/authorizationUserRouter.ts
 
 import express from 'express'
 import prisma from '../../db/prisma'

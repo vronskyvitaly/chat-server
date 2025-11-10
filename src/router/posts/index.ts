@@ -1,8 +1,8 @@
 // src/router/index.ts
 
 import express from 'express'
-import prisma from '../../db/prisma'
 import authenticateToken from '../../middleware/authenticate-token'
+import prisma from '../../db/prisma'
 
 const router = express.Router()
 

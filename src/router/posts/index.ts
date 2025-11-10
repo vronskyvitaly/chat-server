@@ -1,8 +1,8 @@
-// src/routes/posts.ts
+// src/router/index.ts
 
 import express from 'express'
-import prisma from '../db/prisma'
-import authenticateToken from '../middleware/middleware'
+import prisma from '../../db/prisma'
+import authenticateToken from '../../middleware/authenticate-token'
 
 const router = express.Router()
 
@@ -34,23 +34,29 @@ router.get('/posts', authenticateToken, async (req, res): Promise<any> => {
   }
 })
 
-// POST /add-post
-router.post('/add-post', authenticateToken, async (req, res) => {
-  const { title, content } = req.body
+// GET /posts/get-user-posts — получение постов определённого пользователя
+router.get('/posts/get-user-posts', authenticateToken, async (req, res) => {
+  const userId = req.user?.userId
+
   try {
-    // Создаем новый пост
-    const newPost = await prisma.post.create({
-      data: {
-        title,
-        content,
-        authorId: (req.user as any).userId
+    if (!userId) {
+      res.status(400).json({ message: 'Не указан ID пользователя' })
+      return
+    }
+
+    // Получаем все посты указанного пользователя
+    const userPosts = await prisma.post.findMany({
+      where: {
+        authorId: +userId
+      },
+      orderBy: {
+        createdAt: 'desc'
       }
     })
 
-    // Возвращаем успешный статус и созданный пост
-    res.status(201).json(newPost)
+    // Возвращаем посты
+    res.status(200).json(userPosts)
   } catch (err: unknown) {
-    // Типизируем err как неизвестный тип (unknown)
     let errorMessage: string
     if (typeof err === 'string') {
       errorMessage = err
@@ -59,13 +65,54 @@ router.post('/add-post', authenticateToken, async (req, res) => {
     } else {
       errorMessage = 'Unknown error occurred.'
     }
-    // Ошибка при создании поста
-    res.status(500).send(errorMessage)
+    res.status(500).json({ error: errorMessage })
+  }
+})
+
+// POST /add-post
+router.post('/posts/add-post', authenticateToken, async (req, res) => {
+  const { title, content } = req.body
+  const userId = req.user?.userId
+
+  try {
+    // Проверяем наличие обязательных полей
+    if (!title || !content) {
+      res.status(400).json({ message: 'Заголовок и содержание обязательны' })
+      return // ← ДОБАВЛЕНО
+    }
+
+    if (!userId) {
+      res.status(400).json({ message: 'Не указан ID пользователя' })
+      return
+    }
+
+    // Создаем новый пост
+    const newPost = await prisma.post.create({
+      data: {
+        title,
+        content,
+        authorId: +userId!
+      }
+    })
+
+    res.status(201).json(newPost)
+  } catch (err: unknown) {
+    console.error('Ошибка при создании поста:', err)
+
+    let errorMessage = 'Unknown error occurred.'
+    if (err instanceof Error) {
+      errorMessage = err.message
+    }
+
+    res.status(500).json({
+      message: 'Ошибка при создании поста',
+      error: errorMessage
+    })
   }
 })
 
 // DELETE /delete-post/:postId
-router.delete('/delete-post/:postId', async (req, res) => {
+router.delete('/posts/delete-post/:postId', authenticateToken, async (req, res) => {
   const postId = parseInt(req.params.postId, 10)
   try {
     // Удаляем пост по его ID

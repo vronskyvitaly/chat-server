@@ -1,7 +1,7 @@
-// src/routes/users.ts
+// src/routes/index.ts
 
 import express from 'express'
-import prisma from '../db/prisma'
+import prisma from '../../db/prisma'
 
 const router = express.Router()
 
@@ -37,12 +37,13 @@ router.get('/users', async (req, res) => {
 
 // Роут для поиска пользователя по email
 router.get('/user/:email', async (req, res) => {
-  const { email } = req.params // Получаем email из параметров маршрута
+  const { email } = req.params
 
   try {
     // Ищем пользователя по email
     const user = await prisma.user.findUnique({
-      where: { email: email } // Указываем условие поиска
+      where: { email: email },
+      omit: { password: true }
     })
 
     // Если пользователь не найден, возвращаем 404
@@ -50,11 +51,8 @@ router.get('/user/:email', async (req, res) => {
       res.status(404).json({ message: 'User not found' })
     }
 
-    // Удаляем пароль из объекта пользователя
-    const { password, ...userWithoutPassword }: any = user
-
     // Возвращаем найденного пользователя
-    res.status(200).json(userWithoutPassword)
+    res.status(200).json(user)
   } catch (err: unknown) {
     // Типизируем err как неизвестный тип (unknown)
     let errorMessage: string

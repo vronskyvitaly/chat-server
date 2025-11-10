@@ -3,10 +3,10 @@ import cors from 'cors'
 import dotenv from 'dotenv'
 import usersRouter from './router/users'
 import postsRouter from './router/posts'
-import authorizationUserRouter from './router/auth/authorization'
-import { setupChat } from './router/сhat'
+import authorizationUserRouter from './router/auth'
 import expressWs from 'express-ws'
 import session from 'express-session'
+import { setupChatRoom } from './router/сhatroom'
 
 dotenv.config()
 
@@ -33,4 +33,4 @@ app.use('/api', usersRouter)
 app.use('/api', postsRouter)
 
 // Передаем `app` в `setupChat`
-setupChat(app)
+setupChatRoom(app)

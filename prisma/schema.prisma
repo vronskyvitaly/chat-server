@@ -1,5 +1,5 @@
 generator client {
-  provider = "prisma-client"
+  provider = "prisma-client-js"
   output   = "../src/generated/prisma"
 }
 
@@ -13,10 +13,32 @@ model User {
   name          String
   email         String             @unique
   password      String
+  avatar        String?
+  roomId        Int?
+  lastSeen      DateTime           @default(now())
   createdAt     DateTime           @default(now())
   updatedAt     DateTime           @default(now()) @updatedAt
+  isOnline      Boolean            @default(false)
+
+  // Отношения
+  sentMessages  Message[]          @relation("MessageSender")
+  chatMembers   ChatMember[]
   posts         Post[]
   refreshTokens UserRefreshToken[]
+}
+
+model Message {
+  id          String   @id @default(uuid())
+  chatId      String
+  senderId    Int
+  content     String
+  createdAt   DateTime @default(now())
+  isRead      Boolean  @default(false)
+
+  chat        Chat     @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  sender      User     @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([chatId, createdAt])
 }
 
 model UserRefreshToken {
@@ -34,13 +56,34 @@ model Post {
   authorId  Int
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
-  author    User     @relation(fields: [authorId], references: [id])
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
 }
 
-model chat_messages {
+model Chat {
+  id          String      @id @default(uuid())
+  type        ChatType    @default(DIRECT)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @default(now()) @updatedAt
+  lastMessage String?
+
+  members     ChatMember[]
+  messages    Message[]
+}
+
+model ChatMember {
   id        String   @id @default(uuid())
-  username  String
-  message   String
-  userId    String
-  timestamp DateTime @default(now())
+  chatId    String
+  userId    Int
+
+  chat      Chat     @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([chatId, userId])
+}
+
+
+// Типы чатов
+enum ChatType {
+  DIRECT
+  GROUP
 }

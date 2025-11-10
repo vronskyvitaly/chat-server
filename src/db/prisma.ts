@@ -1,9 +1,9 @@
 // src/prisma.ts
 
-import { PrismaClient } from '../generated/prisma/client'
+import { PrismaClient } from '../../src/generated/prisma'
 
 // Создаем одиночный экземпляр Prisma Client
 const prisma = new PrismaClient()
 
-// Экспортируем единственный экземпляр
+// Экспортируем единственный экземплярck
 export default prisma

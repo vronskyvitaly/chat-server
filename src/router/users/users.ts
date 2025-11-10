@@ -4,6 +4,7 @@ import express from 'express'
 import prisma from '../../db/prisma'
 
 const router = express.Router()
+//
 
 // GET /users
 router.get('/users', async (req, res) => {

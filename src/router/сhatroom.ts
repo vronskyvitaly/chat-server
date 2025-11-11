@@ -100,7 +100,6 @@ async function getOrCreatePrivateChat(userId1: string, userId2: string) {
         },
         messages: {
           orderBy: { createdAt: 'asc' },
-          take: 50,
           include: {
             sender: {
               select: {

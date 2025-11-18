@@ -8,7 +8,7 @@ const router = express.Router()
 //
 
 // GET /users
-router.get('/users', async (req, res) => {
+router.get('/users', async (_, res) => {
   try {
     // Получаем всех пользователей из базы данных
     const users = await prisma.user.findMany({
@@ -51,10 +51,10 @@ router.get('/user/:email', async (req, res) => {
     // Если пользователь не найден, возвращаем 404
     if (!user) {
       res.status(404).json({ message: 'User not found' })
+    } else {
+      // Возвращаем найденного пользователя
+      res.status(200).json(user)
     }
-
-    // Возвращаем найденного пользователя
-    res.status(200).json(user)
   } catch (err: unknown) {
     // Типизируем err как неизвестный тип (unknown)
     let errorMessage: string
@@ -74,17 +74,21 @@ router.get('/user/:email', async (req, res) => {
 router.post('/user/add-user', async (req, res) => {
   const { name, email, password } = req.body
   try {
-    // Создаем нового пользователя
-    const newUser = await prisma.user.create({
-      data: {
-        name,
-        email,
-        password
-      }
-    })
+    if (!name || !email || !password) {
+      res.status(400).json({ message: 'All fields are required' })
+    } else {
+      // Создаем нового пользователя
+      const newUser = await prisma.user.create({
+        data: {
+          name,
+          email,
+          password
+        }
+      })
 
-    // Возвращаем успешный статус и пользователя
-    res.status(201).json(newUser)
+      // Возвращаем успешный статус и пользователя
+      res.status(201).json(newUser)
+    }
   } catch (err: unknown) {
     // Типизируем err как неизвестный тип (unknown)
     let errorMessage: string
@@ -112,20 +116,21 @@ router.delete('/users/delete-user/:id', async (req, res) => {
 
     if (!existingUser) {
       res.status(404).json({ message: 'User not found' })
-    }
-    // Удаляем пользователя
-    await prisma.user.delete({
-      where: { id: +id }
-    })
+    } else {
+      // Удаляем пользователя
+      await prisma.user.delete({
+        where: { id: +id }
+      })
 
-    res.status(200).json({
-      message: 'User deleted successfully',
-      deletedUser: {
-        id: existingUser!.id,
-        name: existingUser!.name,
-        email: existingUser!.email
-      }
-    })
+      res.status(200).json({
+        message: 'User deleted successfully',
+        deletedUser: {
+          id: existingUser!.id,
+          name: existingUser!.name,
+          email: existingUser!.email
+        }
+      })
+    }
   } catch (err: unknown) {
     let errorMessage: string
     if (typeof err === 'string') {

@@ -8,6 +8,7 @@ type MessageData = {
   username: string
   message: string
   receiverId?: string
+  isTyping?: boolean
   chatId?: string
   messageId?: string
   targetUserId?: string
@@ -119,7 +120,7 @@ async function getOrCreatePrivateChat(userId1: string, userId2: string) {
     }
 
     // Создаем новый приватный чат
-    const newChat = await prisma.chat.create({
+    return await prisma.chat.create({
       data: {
         type: 'DIRECT',
         members: {
@@ -154,8 +155,6 @@ async function getOrCreatePrivateChat(userId1: string, userId2: string) {
         }
       }
     })
-
-    return newChat
   } catch (error) {
     console.error('Error creating/getting private chat:', error)
     throw error
@@ -196,7 +195,7 @@ async function getAllUsersInfo() {
 // Получить чаты пользователя
 async function getUserChats(userId: string) {
   try {
-    const chats = await prisma.chat.findMany({
+    return await prisma.chat.findMany({
       where: {
         members: {
           some: {
@@ -235,8 +234,6 @@ async function getUserChats(userId: string) {
         updatedAt: 'desc'
       }
     })
-
-    return chats
   } catch (error) {
     console.error('Error getting user chats:', error)
     return []
@@ -398,6 +395,7 @@ async function handleMessage(messageData: MessageData, senderId: string, usernam
 
 async function handleJoinChat(messageData: MessageData, senderId: string, username: string, ws: WebSocket) {
   if (!messageData.targetUserId) {
+    console.log(username)
     console.error('No targetUserId for join_chat')
     return
   }
@@ -435,6 +433,7 @@ async function handleJoinChat(messageData: MessageData, senderId: string, userna
 
 async function handlePrivateMessage(messageData: MessageData, senderId: string, username: string) {
   if (!messageData.receiverId) {
+    console.log(username)
     console.error('No receiverId for private message')
     return
   }
@@ -536,13 +535,11 @@ async function handleReadReceipt(messageData: MessageData, senderId: string) {
 function handleTypingIndicator(messageData: MessageData, senderId: string, username: string) {
   if (!messageData.receiverId) return
 
-  const isTyping = messageData.message === 'start'
-
-  const typingMessage: BroadcastMessage = {
+  const typingMessage = {
     type: 'typing',
     senderId,
     username,
-    isTyping: isTyping,
+    isTyping: messageData.isTyping,
     receiverId: messageData.receiverId
   }
 

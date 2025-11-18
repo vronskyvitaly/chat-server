@@ -1,5 +1,5 @@
-import { Router } from 'express'
 import bcrypt from 'bcrypt'
+import { Router } from 'express'
 import jwt from 'jsonwebtoken'
 import prisma from '../../db/prisma'
 
@@ -17,20 +17,20 @@ authorizationUserRouter.post('/register', async (req, res): Promise<void> => {
 
     if (existingUser) {
       res.status(400).json({ message: 'Пользователь с таким email уже зарегистрирован' })
+    } else {
+      const hashedPassword = await bcrypt.hash(password, 10)
+
+      // Создаем нового пользователя
+      const user = await prisma.user.create({
+        data: {
+          name,
+          email,
+          password: hashedPassword
+        }
+      })
+
+      res.status(201).json({ message: 'Пользователь зарегистрирован', userId: user.id })
     }
-
-    const hashedPassword = await bcrypt.hash(password, 10)
-
-    // Создаем нового пользователя
-    const user = await prisma.user.create({
-      data: {
-        name,
-        email,
-        password: hashedPassword
-      }
-    })
-
-    res.status(201).json({ message: 'Пользователь зарегистрирован', userId: user.id })
   } catch (error) {
     res.status(500).json({ message: 'Ошибка регистрации', error })
   }
@@ -45,9 +45,7 @@ authorizationUserRouter.post('/login', async (req, res): Promise<void> => {
 
     if (!user || !(await bcrypt.compare(password, user.password))) {
       res.status(401).json({ message: 'Неверный логин или пароль' })
-    }
-
-    if (user) {
+    } else {
       const accessToken = jwt.sign({ userId: user.id }, process.env.JWT_SECRET as string, { expiresIn: '1m' })
       const refreshToken = jwt.sign({ userId: user.id }, process.env.JWT_SECRET as string, {
         expiresIn: '7d'
@@ -85,13 +83,13 @@ authorizationUserRouter.post('/token/refresh', async (req, res): Promise<void> =
 
     if (!storedToken || new Date() > new Date(storedToken.expiresAt)) {
       res.status(403).json({ message: 'Недействительный refresh-токен' })
+    } else {
+      const accessToken = jwt.sign({ userId: storedToken!.userId }, process.env.JWT_SECRET as string, {
+        expiresIn: '15m'
+      })
+      console.log('Обновленный access-токен: ', accessToken)
+      res.json({ accessToken })
     }
-
-    const accessToken = jwt.sign({ userId: storedToken!.userId }, process.env.JWT_SECRET as string, {
-      expiresIn: '15m'
-    })
-    console.log('Обновленный access-токен: ', accessToken)
-    res.json({ accessToken })
   } catch (error) {
     res.status(500).json({ message: 'Ошибка обновления токена' })
   }
@@ -109,9 +107,9 @@ authorizationUserRouter.post('/logout', async (req, res): Promise<void> => {
 
     if (deletedTokens.count === 0) {
       res.status(404).json({ message: 'Токен не найден' })
+    } else {
+      res.status(204).send()
     }
-
-    res.status(204).send()
   } catch (error) {
     res.status(500).json({ message: 'Ошибка при выходе' })
   }

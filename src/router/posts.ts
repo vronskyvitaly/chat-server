@@ -294,6 +294,8 @@ router.post('/posts/add-post', authenticateToken, async (req, res) => {
         }
       })
 
+      console.log('Created post postsNamespace', postsNamespace)
+
       // ✅ ОТПРАВЛЯЕМ УВЕДОМЛЕНИЕ ВСЕМ ПОДКЛЮЧЕННЫМ КЛИЕНТАМ
       if (postsNamespace) {
         postsNamespace.emit('new_post', {

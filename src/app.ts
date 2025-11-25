@@ -8,7 +8,7 @@ import chatsRouter from './router/chat'
 import authorizationUserRouter from './router/auth/authorizationUserRouter'
 import session from 'express-session'
 import { Server } from 'socket.io'
-import { createServer } from 'http'
+import { createServer } from 'https'
 import { setupChatWebSocket } from './router/testGetUser'
 
 dotenv.config()

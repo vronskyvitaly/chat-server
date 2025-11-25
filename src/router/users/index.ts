@@ -2,7 +2,7 @@
 
 import express from 'express'
 import prisma from '../../db/prisma'
-import authenticateToken from '../../middleware/authenticate-token'
+import { getOnlineUsersWithData } from '../web-socket'
 
 const router = express.Router()
 
@@ -429,276 +429,99 @@ router.delete('/users/delete-user/:id', async (req, res) => {
   }
 })
 
-// Упрощенная версия - получаем сообщения между двумя пользователями
-router.post('/users/get-messages', authenticateToken, async (req, res) => {
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     OnlineUser:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: integer
+ *           example: 1
+ *         name:
+ *           type: string
+ *           example: John Doe
+ *         email:
+ *           type: string
+ *           format: email
+ *           example: john@example.com
+ *         avatar:
+ *           type: string
+ *           nullable: true
+ *           example: https://example.com/avatar.jpg
+ *         isOnline:
+ *           type: boolean
+ *           example: true
+ *         lastSeen:
+ *           type: string
+ *           format: date-time
+ *           example: 2023-01-01T00:00:00.000Z
+ *         socketId:
+ *           type: string
+ *           example: abc123def456
+ *     OnlineUsersResponse:
+ *       type: object
+ *       properties:
+ *         users:
+ *           type: array
+ *           items:
+ *             $ref: '#/components/schemas/OnlineUser'
+ *         count:
+ *           type: integer
+ *           example: 5
+ */
+
+/**
+ * @swagger
+ * /api/users/online:
+ *   get:
+ *     summary: Получить список онлайн пользователей
+ *     description: Возвращает массив пользователей, которые сейчас онлайн через WebSocket
+ *     tags: [Users]
+ *     responses:
+ *       200:
+ *         description: Успешный запрос. Возвращает массив онлайн пользователей
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/OnlineUsersResponse'
+ *             example:
+ *               users:
+ *                 - id: 1
+ *                   name: John Doe
+ *                   email: john@example.com
+ *                   avatar: https://example.com/avatar1.jpg
+ *                   isOnline: true
+ *                   lastSeen: 2023-01-01T00:00:00.000Z
+ *                   socketId: "abc123"
+ *                 - id: 2
+ *                   name: Jane Smith
+ *                   email: jane@example.com
+ *                   avatar: null
+ *                   isOnline: true
+ *                   lastSeen: 2023-01-01T00:00:00.000Z
+ *                   socketId: "def456"
+ *               count: 2
+ *
+ *       500:
+ *         description: Внутренняя ошибка сервера
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+router.get('/users/online', async (_, res) => {
   try {
-    // Проверяем, есть ли пользователь
-    if (!req.user) {
-      res.status(401).json({ message: 'Пользователь не аутентифицирован' })
-      return
-    }
+    // Получаем онлайн пользователей с дополнительными данными
+    const onlineUsers = await getOnlineUsersWithData()
 
-    const userId = req?.user?.userId
-    const { otherUserId } = req.body
-
-    console.log('🔍 Fetching messages for:', { userId, otherUserId })
-
-    // Валидация входных данных
-    if (!userId) {
-      res.status(400).json({ message: 'ID пользователя обязательно' })
-      return
-    }
-
-    if (!otherUserId) {
-      res.status(400).json({ message: 'ID собеседника обязательно' })
-      return
-    }
-
-    const userIdNum = parseInt(userId)
-    const otherUserIdNum = parseInt(otherUserId)
-
-    console.log('🔍 Parsed IDs:', { userIdNum, otherUserIdNum })
-
-    // Находим чат между двумя пользователями
-    const chat = await prisma.chat.findFirst({
-      where: {
-        type: 'DIRECT',
-        AND: [{ members: { some: { userId: userIdNum } } }, { members: { some: { userId: otherUserIdNum } } }]
-      },
-      include: {
-        members: true // Включаем members для отладки
-      }
+    res.status(200).json({
+      users: onlineUsers,
+      count: onlineUsers.length
     })
-
-    console.log('🔍 Found chat:', chat)
-    console.log('🔍 Chat members:', chat?.members)
-
-    let messages: any[] = []
-
-    if (chat) {
-      // Получаем сообщения из найденного чата
-      messages = await prisma.message.findMany({
-        where: {
-          chatId: chat.id
-        },
-        include: {
-          sender: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              avatar: true
-            }
-          }
-        },
-        orderBy: {
-          createdAt: 'asc'
-        }
-      })
-
-      console.log('🔍 Found messages:', messages.length)
-    } else {
-      console.log('❌ No chat found between users')
-
-      // Дополнительная проверка - ищем чаты каждого пользователя отдельно
-      const userChats = await prisma.chat.findMany({
-        where: {
-          type: 'DIRECT',
-          members: {
-            some: { userId: userIdNum }
-          }
-        },
-        include: {
-          members: true
-        }
-      })
-
-      console.log('🔍 User chats:', userChats.length)
-
-      const otherUserChats = await prisma.chat.findMany({
-        where: {
-          type: 'DIRECT',
-          members: {
-            some: { userId: otherUserIdNum }
-          }
-        },
-        include: {
-          members: true
-        }
-      })
-
-      console.log('🔍 Other user chats:', otherUserChats.length)
-    }
-
-    // Форматируем сообщения для клиента
-    const formattedMessages = messages.map(message => ({
-      id: message.id,
-      content: message.content,
-      senderId: message.senderId,
-      receiverId: message.senderId === userIdNum ? otherUserIdNum : userIdNum,
-      chatId: message.chatId,
-      timestamp: message.createdAt,
-      isRead: message.isRead,
-      sender: message.sender
-    }))
-
-    console.log('✅ Sending formatted messages:', formattedMessages.length)
-
-    // Возвращаем массив сообщений
-    res.status(200).json(formattedMessages)
   } catch (err: unknown) {
-    console.error('❌ Error fetching messages:', err)
-    let errorMessage: string
-    if (typeof err === 'string') {
-      errorMessage = err
-    } else if (err instanceof Error) {
-      errorMessage = err.message
-    } else {
-      errorMessage = 'Unknown error occurred.'
-    }
-    res.status(500).json({ message: 'Ошибка при получении сообщений', error: errorMessage })
-  }
-})
-
-router.post('/users/send-message', authenticateToken, async (req, res) => {
-  try {
-    // Проверяем аутентификацию
-    if (!req.user) {
-      res.status(401).json({ message: 'Пользователь не аутентифицирован' })
-      return
-    }
-
-    const senderId = req.user.userId
-    const { content, receiverId, chatId } = req.body
-
-    console.log('📨 Sending message:', { senderId, receiverId, content, chatId })
-
-    // Валидация входных данных
-    if (!content || !content.trim()) {
-      res.status(400).json({ message: 'Текст сообщения обязателен' })
-      return
-    }
-
-    if (!receiverId) {
-      res.status(400).json({ message: 'ID получателя обязательно' })
-      return
-    }
-
-    const senderIdNum = parseInt(senderId)
-    const receiverIdNum = parseInt(receiverId)
-
-    // Проверяем, что отправитель и получатель разные пользователи
-    if (senderIdNum === receiverIdNum) {
-      res.status(400).json({ message: 'Нельзя отправить сообщение самому себе' })
-      return
-    }
-
-    let targetChatId: string
-
-    // Если chatId передан, используем его
-    if (chatId) {
-      targetChatId = String(chatId)
-
-      // Проверяем, что пользователь является участником чата
-      const chatMembership = await prisma.chatMember.findFirst({
-        where: {
-          chatId: targetChatId,
-          userId: senderIdNum
-        }
-      })
-
-      if (!chatMembership) {
-        res.status(403).json({ message: 'У вас нет доступа к этому чату' })
-        return
-      }
-    } else {
-      // Ищем существующий чат между пользователями
-      let chat = await prisma.chat.findFirst({
-        where: {
-          type: 'DIRECT',
-          AND: [
-            { members: { some: { userId: senderIdNum } } },
-            { members: { some: { userId: receiverIdNum } } }
-          ]
-        }
-      })
-
-      // Если чат не существует, создаем новый
-      if (!chat) {
-        console.log('💬 Creating new chat between:', senderIdNum, 'and', receiverIdNum)
-
-        // Генерируем уникальный ID для чата
-        const newChatId = `chat_${Date.now()}_${senderIdNum}_${receiverIdNum}`
-
-        chat = await prisma.chat.create({
-          data: {
-            id: newChatId,
-            type: 'DIRECT',
-            members: {
-              create: [{ userId: senderIdNum }, { userId: receiverIdNum }]
-            }
-          }
-        })
-        console.log('✅ New chat created with ID:', chat.id)
-      } else {
-        console.log('🔍 Found existing chat with ID:', chat.id)
-      }
-
-      targetChatId = chat.id
-    }
-
-    // Проверяем существование чата перед созданием сообщения
-    const existingChat = await prisma.chat.findUnique({
-      where: { id: targetChatId }
-    })
-
-    if (!existingChat) {
-      res.status(404).json({ message: 'Чат не найден' })
-      return
-    }
-
-    console.log('✅ Chat exists:', existingChat.id)
-
-    // Создаем сообщение
-    const newMessage = await prisma.message.create({
-      data: {
-        content: content.trim(),
-        senderId: senderIdNum,
-        chatId: targetChatId,
-        isRead: false
-      },
-      include: {
-        sender: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            avatar: true
-          }
-        }
-      }
-    })
-
-    console.log('✅ Message created with ID:', newMessage.id)
-
-    // Форматируем ответ для клиента
-    const formattedMessage = {
-      id: newMessage.id,
-      content: newMessage.content,
-      senderId: newMessage.senderId,
-      receiverId: newMessage.senderId === senderIdNum ? receiverIdNum : senderIdNum,
-      chatId: newMessage.chatId,
-      timestamp: newMessage.createdAt,
-      isRead: newMessage.isRead,
-      sender: newMessage.sender
-    }
-
-    console.log('📤 Sending formatted message response')
-
-    // Возвращаем созданное сообщение
-    res.status(201).json(formattedMessage)
-  } catch (err: unknown) {
-    console.error('❌ Error sending message:', err)
+    console.error('❌ Error fetching online users:', err)
 
     let errorMessage: string
     if (typeof err === 'string') {
@@ -707,23 +530,13 @@ router.post('/users/send-message', authenticateToken, async (req, res) => {
       errorMessage = err.message
     } else {
       errorMessage = 'Unknown error occurred.'
-    }
-
-    // Специальная обработка ошибок базы данных
-    if (err instanceof Error && 'code' in err) {
-      const prismaError = err as { code: string; meta?: any }
-
-      if (prismaError.code === 'P2003') {
-        errorMessage = 'Ошибка внешнего ключа: проверьте существование чата или пользователя'
-        res.status(400).json({ message: errorMessage })
-        return
-      }
     }
 
     res.status(500).json({
-      message: 'Ошибка при отправке сообщения',
+      message: 'Failed to fetch online users',
       error: errorMessage
     })
   }
 })
+
 export default router

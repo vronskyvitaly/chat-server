@@ -288,6 +288,7 @@ authorizationUserRouter.post('/login', async (req, res): Promise<void> => {
     })
   }
 })
+
 /**
  * @swagger
  * /api/auth/token/refresh:

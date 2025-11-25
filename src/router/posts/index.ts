@@ -294,11 +294,9 @@ router.post('/posts/add-post', authenticateToken, async (req, res) => {
         }
       })
 
-      console.log('Created post postsNamespace', postsNamespace)
-
       // ✅ ОТПРАВЛЯЕМ УВЕДОМЛЕНИЕ ВСЕМ ПОДКЛЮЧЕННЫМ КЛИЕНТАМ
       if (postsNamespace) {
-        postsNamespace.emit('new_post', {
+        postsNamespace.emit('CREATE_POST', {
           post: newPost,
           message: 'New post created!',
           timestamp: new Date().toISOString()
@@ -374,6 +372,15 @@ router.delete('/posts/delete-post/:postId', authenticateToken, async (req, res) 
         id: +postId
       }
     })
+
+    // ✅ ОТПРАВЛЯЕМ УВЕДОМЛЕНИЕ ВСЕМ ПОДКЛЮЧЕННЫМ КЛИЕНТАМ
+    if (postsNamespace) {
+      postsNamespace.emit('DELETED_POST', {
+        post: deletedPost,
+        message: 'deleted post was deleted successfully!',
+        timestamp: new Date().toISOString()
+      })
+    }
 
     // Возвращаем успешный статус и удаленный пост
     res.status(200).json(deletedPost)

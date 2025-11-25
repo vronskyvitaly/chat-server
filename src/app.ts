@@ -9,6 +9,7 @@ import session from 'express-session'
 import { Server } from 'socket.io'
 import { createServer } from 'http'
 import { webSocket } from './router/web-socket'
+import path from 'path'
 
 dotenv.config()
 
@@ -26,7 +27,9 @@ const io = new Server(server, {
 // 4. Middleware
 app.use(cors({ origin: '*', credentials: true }))
 app.use(express.json())
-// app.use(express.static(path.resolve(__dirname, '../src/static')))
+
+// 5. Static files
+app.use(express.static(path.resolve(__dirname, '../src/static')))
 app.use(
   session({
     secret: process.env.SESSION_SECRET as string,
@@ -36,13 +39,13 @@ app.use(
   })
 )
 
-// 5. Маршруты
+// 6. Маршруты
 app.use('/api/auth', authorizationUserRouter)
 app.use('/api-docs', swaggerRouter)
 app.use('/api', usersRouter)
 app.use('/api', postsRouter)
 
-// 6. WebSocket
+// 7. WebSocket
 webSocket(io)
 
 export { app, io, server }

@@ -7,7 +7,6 @@ import swaggerRouter from './router/swagger'
 import chatsRouter from './router/chat'
 import authorizationUserRouter from './router/auth/authorizationUserRouter'
 import session from 'express-session'
-import path from 'path'
 import { Server } from 'socket.io'
 import { createServer } from 'http'
 import { setupChatWebSocket } from './router/testGetUser'
@@ -28,7 +27,7 @@ const io = new Server(server, {
 // 4. Middleware
 app.use(cors({ origin: '*', credentials: true }))
 app.use(express.json())
-app.use(express.static(path.resolve(__dirname, '../src/static')))
+// app.use(express.static(path.resolve(__dirname, '../src/static')))
 app.use(
   session({
     secret: process.env.SESSION_SECRET as string,

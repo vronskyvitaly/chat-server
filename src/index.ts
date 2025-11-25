@@ -1,4 +1,4 @@
-import { app } from './app'
+import { app, server } from './app'
 import cors from 'cors'
 
 app.use(
@@ -16,7 +16,7 @@ app.use(
 
 const port = process.env.PORT || 3001
 const startApp = () => {
-  app.listen(port, () => {
+  server.listen(port, () => {
     console.log(`Example app listening on port ${port}`)
   })
 }

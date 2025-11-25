@@ -5,7 +5,157 @@ import prisma from '../../db/prisma'
 
 const authorizationUserRouter = Router()
 
-// Регистрация пользователя
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     UserRegistration:
+ *       type: object
+ *       required:
+ *         - name
+ *         - email
+ *         - password
+ *       properties:
+ *         name:
+ *           type: string
+ *           example: John Doe
+ *         email:
+ *           type: string
+ *           format: email
+ *           example: john@example.com
+ *         password:
+ *           type: string
+ *           format: password
+ *           example: securePassword123
+ *     UserLogin:
+ *       type: object
+ *       required:
+ *         - email
+ *         - password
+ *       properties:
+ *         email:
+ *           type: string
+ *           format: email
+ *           example: john@example.com
+ *         password:
+ *           type: string
+ *           format: password
+ *           example: securePassword123
+ *     RefreshTokenRequest:
+ *       type: object
+ *       required:
+ *         - refreshToken
+ *       properties:
+ *         refreshToken:
+ *           type: string
+ *           example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+ *     LogoutRequest:
+ *       type: object
+ *       required:
+ *         - refreshToken
+ *       properties:
+ *         refreshToken:
+ *           type: string
+ *           example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+ *     RegistrationResponse:
+ *       type: object
+ *       properties:
+ *         message:
+ *           type: string
+ *           example: Пользователь зарегистрирован
+ *         userId:
+ *           type: integer
+ *           example: 1
+ *     LoginResponse:
+ *       type: object
+ *       properties:
+ *         accessToken:
+ *           type: string
+ *           example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+ *         refreshToken:
+ *           type: string
+ *           example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+ *         id:
+ *           type: integer
+ *           example: 1
+ *         email:
+ *           type: string
+ *           example: john@example.com
+ *     RefreshTokenResponse:
+ *       type: object
+ *       properties:
+ *         accessToken:
+ *           type: string
+ *           example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+ *     ErrorResponse:
+ *       type: object
+ *       properties:
+ *         message:
+ *           type: string
+ *           example: Error message
+ *         error:
+ *           type: string
+ *           example: Detailed error description
+ *   securitySchemes:
+ *     bearerAuth:
+ *       type: http
+ *       scheme: bearer
+ *       bearerFormat: JWT
+ */
+
+/**
+ * @swagger
+ * tags:
+ *   name: Authentication
+ *   description: API для аутентификации и управления пользователями
+ */
+
+/**
+ * @swagger
+ * /api/auth/register:
+ *   post:
+ *     summary: Регистрация нового пользователя
+ *     description: Создает нового пользователя в системе
+ *     tags: [Authentication]
+ *     requestBody:
+ *       required: true
+ *       description: Данные для регистрации пользователя
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/UserRegistration'
+ *           example:
+ *             name: John Doe
+ *             email: john@example.com
+ *             password: securePassword123
+ *     responses:
+ *       201:
+ *         description: Пользователь успешно зарегистрирован
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/RegistrationResponse'
+ *             example:
+ *               message: Пользователь зарегистрирован
+ *               userId: 1
+ *       400:
+ *         description: Пользователь с таким email уже зарегистрирован
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *             example:
+ *               message: Пользователь с таким email уже зарегистрирован
+ *       500:
+ *         description: Ошибка регистрации
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *             example:
+ *               message: Ошибка регистрации
+ *               error: Database connection failed
+ */
 authorizationUserRouter.post('/register', async (req, res): Promise<void> => {
   const { name, email, password } = req.body
 
@@ -26,8 +176,16 @@ authorizationUserRouter.post('/register', async (req, res): Promise<void> => {
           name,
           email,
           password: hashedPassword
-        }
+        },
+        omit: { password: true }
       })
+
+      // const responseWS = {
+      //   type: 'user_created',
+      //   user: user
+      // }
+
+      // broadcastToAll(JSON.stringify(responseWS))
 
       res.status(201).json({ message: 'Пользователь зарегистрирован', userId: user.id })
     }
@@ -36,7 +194,52 @@ authorizationUserRouter.post('/register', async (req, res): Promise<void> => {
   }
 })
 
-// Вход пользователя
+/**
+ * @swagger
+ * /api/auth/login:
+ *   post:
+ *     summary: Вход пользователя в систему
+ *     description: Аутентификация пользователя и выдача access и refresh токенов
+ *     tags: [Authentication]
+ *     requestBody:
+ *       required: true
+ *       description: Учетные данные пользователя
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/UserLogin'
+ *           example:
+ *             email: john@example.com
+ *             password: securePassword123
+ *     responses:
+ *       200:
+ *         description: Успешный вход в систему
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/LoginResponse'
+ *             example:
+ *               accessToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+ *               refreshToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+ *               id: 1
+ *               email: john@example.com
+ *       401:
+ *         description: Неверный логин или пароль
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *             example:
+ *               message: Неверный логин или пароль
+ *       500:
+ *         description: Ошибка при авторизации
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *             example:
+ *               message: Ошибка при авторизации
+ */
 authorizationUserRouter.post('/login', async (req, res): Promise<void> => {
   const { email, password } = req.body
 
@@ -51,6 +254,16 @@ authorizationUserRouter.post('/login', async (req, res): Promise<void> => {
         expiresIn: '7d'
       })
 
+      // Обновляем статус пользователя на "online"
+      const updatedUser = await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          isOnline: true,
+          lastSeen: new Date()
+        },
+        omit: { password: true }
+      })
+
       // Сохранение refresh токена в базе данных
       const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 дней
       await prisma.userRefreshToken.create({
@@ -61,7 +274,13 @@ authorizationUserRouter.post('/login', async (req, res): Promise<void> => {
         }
       })
 
-      res.json({ accessToken, refreshToken, id: user.id, email: email })
+      res.json({
+        accessToken,
+        refreshToken,
+        id: updatedUser.id,
+        email: updatedUser.email,
+        name: updatedUser.name
+      })
     }
   } catch (error) {
     res.status(500).json({
@@ -69,8 +288,48 @@ authorizationUserRouter.post('/login', async (req, res): Promise<void> => {
     })
   }
 })
-
-// Обновление access-токена
+/**
+ * @swagger
+ * /api/auth/token/refresh:
+ *   post:
+ *     summary: Обновление access токена
+ *     description: Выдает новый access токен по валидному refresh токену
+ *     tags: [Authentication]
+ *     requestBody:
+ *       required: true
+ *       description: Refresh токен для обновления access токена
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/RefreshTokenRequest'
+ *           example:
+ *             refreshToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+ *     responses:
+ *       200:
+ *         description: Access токен успешно обновлен
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/RefreshTokenResponse'
+ *             example:
+ *               accessToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+ *       403:
+ *         description: Недействительный refresh токен
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *             example:
+ *               message: Недействительный refresh-токен
+ *       500:
+ *         description: Ошибка обновления токена
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *             example:
+ *               message: Ошибка обновления токена
+ */
 authorizationUserRouter.post('/token/refresh', async (req, res): Promise<void> => {
   const { refreshToken } = req.body
 
@@ -95,7 +354,42 @@ authorizationUserRouter.post('/token/refresh', async (req, res): Promise<void> =
   }
 })
 
-// Выход пользователя
+/**
+ * @swagger
+ * /api/auth/logout:
+ *   post:
+ *     summary: Выход пользователя из системы
+ *     description: Удаляет refresh токен пользователя для завершения сессии
+ *     tags: [Authentication]
+ *     requestBody:
+ *       required: true
+ *       description: Refresh токен для удаления
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/LogoutRequest'
+ *           example:
+ *             refreshToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+ *     responses:
+ *       204:
+ *         description: Успешный выход из системы
+ *       404:
+ *         description: Токен не найден
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *             example:
+ *               message: Токен не найден
+ *       500:
+ *         description: Ошибка при выходе
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *             example:
+ *               message: Ошибка при выходе
+ */
 authorizationUserRouter.post('/logout', async (req, res): Promise<void> => {
   const { refreshToken } = req.body
 

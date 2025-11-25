@@ -1,6 +1,6 @@
 import express from 'express'
 import swaggerUi from 'swagger-ui-express'
-import { swaggerSpec } from '../swaggerConfig'
+import { swaggerSpec } from './_config'
 
 const router = express.Router()
 

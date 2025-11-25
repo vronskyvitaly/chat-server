@@ -4,12 +4,11 @@ import dotenv from 'dotenv'
 import usersRouter from './router/users'
 import postsRouter from './router/posts'
 import swaggerRouter from './router/swagger'
-import chatsRouter from './router/chat'
 import authorizationUserRouter from './router/auth/authorizationUserRouter'
 import session from 'express-session'
 import { Server } from 'socket.io'
 import { createServer } from 'http'
-import { setupChatWebSocket } from './router/testGetUser'
+import { webSocket } from './router/web-socket'
 
 dotenv.config()
 
@@ -32,6 +31,7 @@ app.use(
   session({
     secret: process.env.SESSION_SECRET as string,
     resave: false,
+    saveUninitialized: true,
     cookie: { secure: false }
   })
 )
@@ -41,9 +41,8 @@ app.use('/api/auth', authorizationUserRouter)
 app.use('/api-docs', swaggerRouter)
 app.use('/api', usersRouter)
 app.use('/api', postsRouter)
-app.use('/api', chatsRouter)
 
 // 6. WebSocket
-setupChatWebSocket(io)
+webSocket(io)
 
 export { app, io, server }

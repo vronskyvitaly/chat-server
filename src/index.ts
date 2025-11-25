@@ -12,8 +12,6 @@ app.use(
   })
 )
 
-// app.use(passport.initialize())
-
 const port = process.env.PORT || 3001
 const startApp = () => {
   server.listen(port, () => {

@@ -1,9 +1,9 @@
 // src/router/authorizationUserRouter.ts
 
 import express from 'express'
-import prisma from '../db/prisma'
-import authenticateToken from '../middleware/authenticate-token'
-import { postsNamespace } from './testGetUser'
+import authenticateToken from '../../middleware/authenticate-token'
+import prisma from '../../db/prisma'
+import { postsNamespace } from '../web-socket'
 
 const router = express.Router()
 

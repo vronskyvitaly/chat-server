@@ -1,8 +1,8 @@
 // src/routes/authorizationUserRouter.ts
 
 import express from 'express'
-import prisma from '../db/prisma'
-import authenticateToken from '../middleware/authenticate-token'
+import prisma from '../../db/prisma'
+import authenticateToken from '../../middleware/authenticate-token'
 
 const router = express.Router()
 

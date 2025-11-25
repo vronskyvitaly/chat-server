@@ -3,10 +3,9 @@ import { Server, Namespace } from 'socket.io'
 import prisma from '../db/prisma'
 import cookie from 'cookie'
 
-// ✅ Экспортируем postsNamespace чтобы использовать в других модулях
 export let postsNamespace: Namespace | null = null
 
-export function setupChatWebSocket(io: Server) {
+export function webSocket(io: Server) {
   // ✅ Создаем отдельный namespace для постов
   postsNamespace = io.of('/postsWS')
 

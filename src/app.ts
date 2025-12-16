@@ -8,8 +8,8 @@ import authorizationUserRouter from './router/auth/authorizationUserRouter'
 import session from 'express-session'
 import { Server } from 'socket.io'
 import { createServer } from 'http'
-import { webSocket } from './router/web-socket'
 import path from 'path'
+import { WSService } from './web-socket'
 
 dotenv.config()
 
@@ -46,6 +46,6 @@ app.use('/api', usersRouter)
 app.use('/api', postsRouter)
 
 // 7. WebSocket
-webSocket(io)
+const wsService = WSService.getInstance(io)
 
-export { app, io, server }
+export { app, io, server, wsService }

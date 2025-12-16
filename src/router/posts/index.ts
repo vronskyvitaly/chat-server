@@ -1,9 +1,7 @@
-// src/router/authorizationUserRouter.ts
-
 import express from 'express'
 import authenticateToken from '../../middleware/authenticate-token'
 import prisma from '../../db/prisma'
-import { postsNamespace } from '../web-socket'
+import { wsService } from '../../app'
 
 const router = express.Router()
 
@@ -130,6 +128,8 @@ router.get('/posts', authenticateToken, async (req, res): Promise<any> => {
       res.status(200).json(posts)
     }
   } catch (err: unknown) {
+    console.log('❌ Error [src/router/posts/index.ts /posts]:', err)
+
     // Типизируем err как неизвестный тип (unknown)
     let errorMessage: string
     if (typeof err === 'string') {
@@ -210,6 +210,8 @@ router.get('/posts/get-user-posts', authenticateToken, async (req, res) => {
       res.status(200).json(userPosts)
     }
   } catch (err: unknown) {
+    console.log('❌ Error [src/router/posts/index.ts /posts/get-user-posts]:', err)
+
     let errorMessage: string
     if (typeof err === 'string') {
       errorMessage = err
@@ -285,7 +287,6 @@ router.post('/posts/add-post', authenticateToken, async (req, res) => {
       res.status(400).json({ message: 'Заголовок и содержание обязательны' })
       return
     } else {
-      // Создаем новый пост
       const newPost = await prisma.post.create({
         data: {
           title,
@@ -294,19 +295,12 @@ router.post('/posts/add-post', authenticateToken, async (req, res) => {
         }
       })
 
-      // ✅ ОТПРАВЛЯЕМ УВЕДОМЛЕНИЕ ВСЕМ ПОДКЛЮЧЕННЫМ КЛИЕНТАМ
-      if (postsNamespace) {
-        postsNamespace.emit('CREATE_POST', {
-          post: newPost,
-          message: 'New post created!',
-          timestamp: new Date().toISOString()
-        })
-      }
+      wsService.getNotificationService().notify('POST_CREATED', { post: newPost })
 
       res.status(201).json(newPost)
     }
   } catch (err: unknown) {
-    console.error('Ошибка при создании поста:', err)
+    console.log('❌ Error [src/router/posts/index.ts /post/add-post]:', err)
 
     let errorMessage = 'Unknown error occurred.'
     if (err instanceof Error) {
@@ -373,18 +367,12 @@ router.delete('/posts/delete-post/:postId', authenticateToken, async (req, res) 
       }
     })
 
-    // ✅ ОТПРАВЛЯЕМ УВЕДОМЛЕНИЕ ВСЕМ ПОДКЛЮЧЕННЫМ КЛИЕНТАМ
-    if (postsNamespace) {
-      postsNamespace.emit('DELETED_POST', {
-        post: deletedPost,
-        message: 'deleted post was deleted successfully!',
-        timestamp: new Date().toISOString()
-      })
-    }
+    wsService.getNotificationService().notify('POST_DELETED', { postId: +postId })
 
     // Возвращаем успешный статус и удаленный пост
     res.status(200).json(deletedPost)
   } catch (err: unknown) {
+    console.log('❌ Error [src/router/posts/index.ts /posts/delete-post/:postId]:', err)
     // Типизируем err как неизвестный тип (unknown)
     let errorMessage: string
     if (typeof err === 'string') {

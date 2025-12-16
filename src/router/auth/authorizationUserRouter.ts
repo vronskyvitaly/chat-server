@@ -2,6 +2,7 @@ import bcrypt from 'bcrypt'
 import { Router } from 'express'
 import jwt from 'jsonwebtoken'
 import prisma from '../../db/prisma'
+import authenticateToken from '../../middleware/authenticate-token'
 
 const authorizationUserRouter = Router()
 
@@ -112,7 +113,73 @@ const authorizationUserRouter = Router()
 
 /**
  * @swagger
- * /api/auth/register:
+ * /api/auth/me:
+ *   get:
+ *     summary: Получить список онлайн пользователей
+ *     description: Возвращает массив пользователей, которые сейчас онлайн через WebSocket
+ *     tags: [Authentication]
+ *     responses:
+ *       200:
+ *         description: Успешный запрос. Возвращает массив онлайн пользователей
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/OnlineUsersResponse'
+ *             example:
+ *               user:
+ *                 - id: 1
+ *                   name: John Doe
+ *                   email: john@example.com
+ *                   avatar: https://example.com/avatar1.jpg
+ *                   isOnline: true
+ *                   lastSeen: 2023-01-01T00:00:00.000Z
+ *                   socketId: "abc123"
+ *               count: 1
+ *
+ *       500:
+ *         description: Внутренняя ошибка сервера
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+authorizationUserRouter.get('/me', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user?.userId
+    console.log('authorizationUserRouter', userId)
+    if (!userId) {
+      res.status(401).json({
+        message: 'Not authorized'
+      })
+      return
+    } else {
+      const user = await prisma.user.findUnique({ where: { id: +userId }, omit: { password: true } })
+      res.status(200).json({
+        ...user
+      })
+    }
+  } catch (err: unknown) {
+    console.error('❌ Error [src/router/auth/authorizationUserRouter.ts authorizationUserRouter/me]:', err)
+
+    let errorMessage: string
+    if (typeof err === 'string') {
+      errorMessage = err
+    } else if (err instanceof Error) {
+      errorMessage = err.message
+    } else {
+      errorMessage = 'Unknown error occurred.'
+    }
+
+    res.status(500).json({
+      message: 'Failed to fetch online users',
+      error: errorMessage
+    })
+  }
+})
+
+/**
+ * @swagger
+ * /api/auth/sign-up:
  *   post:
  *     summary: Регистрация нового пользователя
  *     description: Создает нового пользователя в системе
@@ -156,7 +223,7 @@ const authorizationUserRouter = Router()
  *               message: Ошибка регистрации
  *               error: Database connection failed
  */
-authorizationUserRouter.post('/register', async (req, res): Promise<void> => {
+authorizationUserRouter.post('/sign-up', async (req, res): Promise<void> => {
   const { name, email, password } = req.body
 
   try {
@@ -180,16 +247,13 @@ authorizationUserRouter.post('/register', async (req, res): Promise<void> => {
         omit: { password: true }
       })
 
-      // const responseWS = {
-      //   type: 'user_created',
-      //   user: user
-      // }
-
-      // broadcastToAll(JSON.stringify(responseWS))
-
       res.status(201).json({ message: 'Пользователь зарегистрирован', userId: user.id })
     }
   } catch (error) {
+    console.log(
+      '❌ Error [src/router/auth/authorizationUserRouter.ts authorizationUserRouter/sing-up]:',
+      error
+    )
     res.status(500).json({ message: 'Ошибка регистрации', error })
   }
 })
@@ -283,6 +347,7 @@ authorizationUserRouter.post('/login', async (req, res): Promise<void> => {
       })
     }
   } catch (error) {
+    console.log('❌ Error [src/router/auth/authorizationUserRouter.ts authorizationUserRouter/login]:', error)
     res.status(500).json({
       message: 'Ошибка при авторизации'
     })
@@ -351,6 +416,10 @@ authorizationUserRouter.post('/token/refresh', async (req, res): Promise<void> =
       res.json({ accessToken })
     }
   } catch (error) {
+    console.log(
+      '❌ Error [src/router/auth/authorizationUserRouter.ts authorizationUserRouter/token/refresh]:',
+      error
+    )
     res.status(500).json({ message: 'Ошибка обновления токена' })
   }
 })
@@ -406,6 +475,10 @@ authorizationUserRouter.post('/logout', async (req, res): Promise<void> => {
       res.status(204).send()
     }
   } catch (error) {
+    console.log(
+      '❌ Error [src/router/auth/authorizationUserRouter.ts authorizationUserRouter/logout]:',
+      error
+    )
     res.status(500).json({ message: 'Ошибка при выходе' })
   }
 })

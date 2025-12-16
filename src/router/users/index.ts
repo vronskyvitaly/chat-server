@@ -154,7 +154,6 @@ router.get('/users/get-all', async (_, res) => {
     // Возвращаем массив пользователей
     res.status(200).json(users)
   } catch (err: unknown) {
-    console.log('❌ Error [src/router/users/index.ts /users/get-all]:', err)
     // Типизируем err как неизвестный тип (unknown)
     let errorMessage: string
     if (typeof err === 'string') {

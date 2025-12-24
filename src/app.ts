@@ -25,7 +25,9 @@ const io = new Server(server, {
   cors: {
     origin: '*',
     credentials: true
-  }
+  },
+  transports: ['websocket', 'polling'],
+  pingInterval: 10000
 })
 
 // 4. Middleware
@@ -34,14 +36,6 @@ app.use(express.json())
 
 // 5. Static files
 app.use(express.static(path.resolve(__dirname, '../src/static')))
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET as string,
-    resave: false,
-    saveUninitialized: true,
-    cookie: { secure: false }
-  })
-)
 
 // 6. Маршруты
 app.use('/api/auth', authorizationUserRouter)

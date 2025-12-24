@@ -3,6 +3,7 @@ import cors from 'cors'
 import dotenv from 'dotenv'
 import usersRouter from './router/users'
 import postsRouter from './router/posts'
+import chatRouter from './router/chat'
 import swaggerRouter from './router/swagger'
 import authorizationUserRouter from './router/auth/authorizationUserRouter'
 import session from 'express-session'
@@ -44,6 +45,7 @@ app.use('/api/auth', authorizationUserRouter)
 app.use('/api-docs', swaggerRouter)
 app.use('/api', usersRouter)
 app.use('/api', postsRouter)
+app.use('/api', chatRouter)
 
 // 7. WebSocket
 const wsService = WSService.getInstance(io)

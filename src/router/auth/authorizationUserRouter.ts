@@ -251,7 +251,7 @@ authorizationUserRouter.post('/sign-up', async (req, res): Promise<void> => {
     }
   } catch (error) {
     console.log(
-      '❌ Error [src/router/auth/authorizationUserRouter.ts authorizationUserRouter/sing-up]:',
+      '❌ Error [src/router/auth/authorizationUserRouter.ts authorizationUserRouter/sign-up]:',
       error
     )
     res.status(500).json({ message: 'Ошибка регистрации', error })

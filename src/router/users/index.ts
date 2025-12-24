@@ -171,7 +171,7 @@ router.get('/users/get-all', async (_, res) => {
 
 /**
  * @swagger
- * /api/users/{email}:
+ * /api/users/by-email/{email}:
  *   get:
  *     summary: Найти пользователя по email
  *     description: Возвращает информацию о пользователе по его email адресу

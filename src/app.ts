@@ -22,8 +22,25 @@ const server = createServer(app)
 
 // 3. Socket.IO сервер
 const io = new Server(server, {
-  cors: { origin: '*', credentials: true },
-  transports: ['polling', 'websocket'] // ✅ Оба транспорта
+  cors: {
+    origin: ['https://developerserver.ru/', 'http://localhost:3000/'],
+    credentials: true
+  },
+  // Критически важные настройки
+  path: '/WS/socket.io', // если используете /WS префикс
+  connectTimeout: 45000,
+  pingInterval: 25000,
+  pingTimeout: 20000,
+  transports: ['websocket', 'polling'],
+  allowUpgrades: true,
+  cookie: false,
+  // Для продакшена
+  ...(process.env.NODE_ENV === 'production' && {
+    transports: ['websocket'],
+    perMessageDeflate: false,
+    httpCompression: true,
+    wsEngine: 'ws'
+  })
 })
 
 // 4. Middleware

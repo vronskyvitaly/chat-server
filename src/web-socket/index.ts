@@ -10,7 +10,7 @@ export class WSService {
   private notificationService: NotificationService
 
   constructor(private io: Server) {
-    this.userService = new UserService()
+    this.userService = new UserService(io)
     this.notificationService = new NotificationService(io)
 
     this.setupConnectionHandler()

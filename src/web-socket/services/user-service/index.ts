@@ -1,5 +1,6 @@
 import prisma from '../../../db/prisma'
 import { wsService } from '../../../app'
+import { Namespace, Server } from 'socket.io'
 
 interface IUser {
   socketId: string
@@ -9,6 +10,11 @@ interface IUser {
 
 export class UserService {
   private onlineUsers = new Map<number, IUser>()
+  public namespace: Namespace
+
+  constructor(private io: Server) {
+    this.namespace = this.io.of('/WS')
+  }
 
   public async onUserConnected(socketId: string, userId: number) {
     console.log('onUserConnected socketId', socketId)

@@ -30,7 +30,9 @@ const authenticateToken = (req: Request, res: Response, next: NextFunction) => {
 
   jwt.verify(token, process.env.JWT_SECRET as string, (err: jwt.VerifyErrors | null, decoded): void => {
     if (err) {
-      console.log('Ошибка верификации токена в authenticateToken:')
+      console.log(
+        'Ошибка верификации токена в [src/middleware/authenticate-token/index.ts] authenticateToken:'
+      )
       res.status(401).json({ message: 'Неверный токен' })
       return
     }

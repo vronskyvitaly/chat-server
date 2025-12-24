@@ -3,13 +3,14 @@ import cors from 'cors'
 import dotenv from 'dotenv'
 import usersRouter from './router/users'
 import postsRouter from './router/posts'
+import chatRouter from './router/chat'
 import swaggerRouter from './router/swagger'
 import authorizationUserRouter from './router/auth/authorizationUserRouter'
 import session from 'express-session'
 import { Server } from 'socket.io'
 import { createServer } from 'http'
-import { webSocket } from './router/web-socket'
 import path from 'path'
+import { WSService } from './web-socket'
 
 dotenv.config()
 
@@ -44,8 +45,9 @@ app.use('/api/auth', authorizationUserRouter)
 app.use('/api-docs', swaggerRouter)
 app.use('/api', usersRouter)
 app.use('/api', postsRouter)
+app.use('/api', chatRouter)
 
 // 7. WebSocket
-webSocket(io)
+const wsService = WSService.getInstance(io)
 
-export { app, io, server }
+export { app, io, server, wsService }

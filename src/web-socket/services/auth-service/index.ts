@@ -6,6 +6,7 @@ export class AuthService {
   static async getUserFromSocket(socket: Socket<DefaultEventsMap, DefaultEventsMap>) {
     console.log('🔐 Getting user from socket')
     const cookiesHeader = socket.handshake.headers.cookie
+    console.log('cookiesHeader ', cookiesHeader)
     if (!cookiesHeader) return null
 
     const parsedCookies = cookie.parse(cookiesHeader)

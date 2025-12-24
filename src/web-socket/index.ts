@@ -22,6 +22,16 @@ export class WSService {
     nsp.on('connection', async socket => {
       console.log('✅ Client connected:', socket.id)
 
+      // Логирование ошибок сокета
+      socket.on('error', (err: any) => {
+        console.error(`⚠️ Socket ${socket.id} error:`, err)
+      })
+
+      // Глобальные ошибки на уровне клиента/сервера socket.io
+      this.io.on('error', err => {
+        console.error('⚠️ Socket.IO error:', err)
+      })
+
       const user = await AuthService.getUserFromSocket(socket)
       if (!user) {
         socket.disconnect(true)
@@ -33,6 +43,7 @@ export class WSService {
 
       // ✅ Ловим отключение
       socket.on('disconnect', async () => {
+        console.log('ssssss')
         console.log(`🔌 Socket ${socket.id} disconnected`)
         await this.userService.onUserDisconnected(user.id)
       })

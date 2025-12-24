@@ -1,5 +1,4 @@
 import { Router } from 'express'
-import { v4 as uuidv4 } from 'uuid'
 import prisma from '../../db/prisma'
 import authenticateToken from '../../middleware/authenticate-token'
 import { wsService } from '../../app'
@@ -48,7 +47,7 @@ router.get('/chat', authenticateToken, async (req, res) => {
 
     // 2. Если чата нет — создать
     if (!chat) {
-      const chatId = uuidv4()
+      const chatId = crypto.randomUUID()
       await prisma.chat.create({
         data: {
           id: chatId,
@@ -109,7 +108,7 @@ router.post('/chat/message', authenticateToken, async (req, res) => {
     // Создаём новое сообщение
     const message = await prisma.message.create({
       data: {
-        id: uuidv4(),
+        id: crypto.randomUUID(),
         content: content.trim(),
         senderId: Number(senderId),
         chatId: chatId
@@ -203,7 +202,7 @@ router.post('/chat/image', authenticateToken, (req, res) => {
       // Создаём сообщение на изображение
       const message = await prisma.message.create({
         data: {
-          id: uuidv4(),
+          id: crypto.randomUUID(),
           content: null,
           imageUrl: uploadResult.url,
           senderId: Number(senderId),

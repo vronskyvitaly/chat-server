@@ -22,7 +22,8 @@ const server = createServer(app)
 
 // 3. Socket.IO сервер
 const io = new Server(server, {
-  cors: { origin: '*', credentials: true }
+  cors: { origin: '*', credentials: true },
+  transports: ['polling', 'websocket'] // ✅ Оба транспорта
 })
 
 // 4. Middleware

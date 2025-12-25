@@ -21,12 +21,14 @@ const server = createServer(app)
 
 // 3. Socket.IO сервер
 const io = new Server(server, {
+  path: '/WS',
   cors: {
     origin: '*',
     credentials: true
   },
-  transports: ['websocket', 'polling'],
-  pingInterval: 10000
+  transports: ['polling', 'websocket'],
+  pingInterval: 10000,
+  pingTimeout: 5000
 })
 
 // 4. Middleware

@@ -1,5 +1,4 @@
 import express from 'express'
-import cors from 'cors'
 import dotenv from 'dotenv'
 import usersRouter from './router/users'
 import postsRouter from './router/posts'
@@ -8,7 +7,6 @@ import swaggerRouter from './router/swagger'
 import authorizationUserRouter from './router/auth/authorizationUserRouter'
 import { Server } from 'socket.io'
 import { createServer } from 'http'
-import path from 'path'
 import { WSService } from './web-socket'
 
 dotenv.config()
@@ -30,11 +28,11 @@ const io = new Server(server, {
 })
 
 // 4. Middleware
-app.use(cors({ origin: '*', credentials: true }))
+// app.use(cors({ origin: '*', credentials: true }))
 app.use(express.json())
 
 // 5. Static files
-app.use(express.static(path.resolve(__dirname, '../src/static')))
+// app.use(express.static(path.resolve(__dirname, '../src/static')))
 
 // 6. Маршруты
 app.use('/api/auth', authorizationUserRouter)

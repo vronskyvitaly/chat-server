@@ -9,6 +9,7 @@ import { Server } from 'socket.io'
 import { createServer } from 'http'
 import { WSService } from './web-socket'
 import cors from 'cors'
+import cookieParser from 'cookie-parser'
 
 dotenv.config()
 
@@ -31,6 +32,7 @@ const io = new Server(server, {
 // 4. Middleware
 app.use(cors({ origin: '*', credentials: true }))
 app.use(express.json())
+app.use(cookieParser()) // ✅ Добавляем парсер кук
 
 // 5. Static files
 // app.use(express.static(path.resolve(__dirname, '../src/static')))

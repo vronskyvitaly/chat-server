@@ -23,7 +23,7 @@ export class WSService {
       console.log('✅ Client connected:', socket.id)
 
       // Логирование ошибок сокета
-      socket.on('error', (err: any) => {
+      this.io.on('error', (err: any) => {
         console.error(`⚠️ Socket ${socket.id} error:`, err)
       })
 

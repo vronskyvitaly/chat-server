@@ -33,6 +33,7 @@ export class WSService {
       })
 
       const user = await AuthService.getUserFromSocket(socket)
+      console.log('src/web-socket/index.ts user', user)
       if (!user) {
         // socket.disconnect(true)
         return

@@ -1,9 +1,8 @@
 import cookie from 'cookie'
-import { DefaultEventsMap, Socket } from 'socket.io'
 import prisma from '../../../db/prisma'
 
 export class AuthService {
-  static async getUserFromSocket(socket: Socket<DefaultEventsMap, DefaultEventsMap>) {
+  static async getUserFromSocket(socket: any) {
     console.log('🔐 Getting user from socket')
     const cookiesHeader = socket.handshake.headers.cookie
     console.log('cookiesHeader ', cookiesHeader)

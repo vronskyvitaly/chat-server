@@ -1,4 +1,4 @@
-import { Server } from 'socket.io'
+import { Namespace, Server } from 'socket.io'
 import { UserService } from './services/user-service'
 import { NotificationService } from './services/notification-service'
 import { AuthService } from './services/auth-service'
@@ -8,18 +8,18 @@ let instance: WSService | null = null
 export class WSService {
   private userService: UserService
   private notificationService: NotificationService
+  private nsp: Namespace
 
   constructor(private io: Server) {
-    this.userService = new UserService(io)
-    this.notificationService = new NotificationService(io)
+    this.nsp = this.io.of('/WS')
+    this.userService = new UserService()
+    this.notificationService = new NotificationService(this.nsp)
 
     this.setupConnectionHandler()
   }
 
   private setupConnectionHandler() {
-    const nsp = this.io.of('/WS')
-
-    nsp.on('connection', async socket => {
+    this.nsp.on('connection', async socket => {
       console.log('✅ Client connected:', socket.id)
 
       // Логирование ошибок сокета
@@ -33,8 +33,9 @@ export class WSService {
       })
 
       const user = await AuthService.getUserFromSocket(socket)
+      console.log('src/web-socket/index.ts user', user)
       if (!user) {
-        socket.disconnect(true)
+        // socket.disconnect(true)
         return
       }
 

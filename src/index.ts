@@ -1,16 +1,4 @@
-import { app, server } from './app'
-import cors from 'cors'
-
-app.use(
-  cors({
-    origin: '*'
-    // ?
-    // origin: ["https://express-start-project.vercel.app"],
-    // methods: "GET,POST,PUT,DELETE",
-    // allowedHeaders:"Content-Type",
-    // credentials: true,
-  })
-)
+import { server } from './app'
 
 const port = process.env.PORT || 3001
 const startApp = () => {
@@ -30,5 +18,3 @@ process.on('beforeExit', async () => {
     console.log(e)
   }
 })
-
-//

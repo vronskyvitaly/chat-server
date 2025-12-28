@@ -34,7 +34,7 @@ export class WSService {
 
       const user = await AuthService.getUserFromSocket(socket)
       if (!user) {
-        socket.disconnect(true)
+        // socket.disconnect(true)
         return
       }
 

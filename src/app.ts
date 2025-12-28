@@ -21,7 +21,6 @@ const server = createServer(app)
 
 // 3. Socket.IO сервер
 const io = new Server(server, {
-  path: '/WS',
   cors: {
     origin: '*',
     credentials: true

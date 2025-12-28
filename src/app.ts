@@ -29,7 +29,7 @@ const io = new Server(server, {
 })
 
 // 4. Middleware
-app.use(cors({ origin: '*', credentials: true }))
+// app.use(cors({ origin: '*', credentials: true }))
 app.use(express.json())
 
 // 5. Static files

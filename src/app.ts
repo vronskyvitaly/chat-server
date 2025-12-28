@@ -23,9 +23,8 @@ const server = createServer(app)
 const io = new Server(server, {
   cors: {
     origin: '*',
-    credentials: true
+    methods: ['GET', 'POST', 'PUT', 'PATCH']
   },
-  transports: ['polling', 'websocket'],
   pingInterval: 10000,
   pingTimeout: 5000
 })

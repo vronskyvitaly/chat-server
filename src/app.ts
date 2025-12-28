@@ -8,6 +8,7 @@ import authorizationUserRouter from './router/auth/authorizationUserRouter'
 import { Server } from 'socket.io'
 import { createServer } from 'http'
 import { WSService } from './web-socket'
+import cors from 'cors'
 
 dotenv.config()
 
@@ -28,7 +29,7 @@ const io = new Server(server, {
 })
 
 // 4. Middleware
-// app.use(cors({ origin: '*', credentials: true }))
+app.use(cors({ origin: '*', credentials: true }))
 app.use(express.json())
 
 // 5. Static files
